@@ -32,7 +32,9 @@ class IndexController extends Controller
 
 
     public function change(Request $request){
+         set_time_limit(0);
          $result = YhcMember::select(['id','bhj_number','members_number','id_card'])->where(['member_type'=>1])->get()->toArray();
+         dd($result);die;
          foreach ($result as $key=>$value) {
              $num = $value['members_number'] - 1;
              for ($i=1; $i<=$num;$i++) {
@@ -51,9 +53,9 @@ class IndexController extends Controller
 
         set_time_limit(0);
         $requestData  = $request->all();
-        $totalPage = $requestData['page'] ?? 62;
+        $totalPage = $requestData['page'] ?? 76;
 
-        $headerArray  = array("Cookie: DASCSESSIONID=72739c2c-40f4-4b80-bb0d-0be8d436bd17;");
+        $headerArray  = array("Cookie: DASCSESSIONID=5c7487c7-3f76-41d3-b935-78c4c489bd41;");
 
         for($i=1;$i <= $totalPage;$i++ ){
             $url = 'https://zjj.sz.gov.cn/zfxx/ggfw/public/selectHouse/publicityList?xfpwh=&bahzh=&zt=%E5%B7%B2%E9%80%89%E6%88%BF&pageIndex=%d&pageSize=100&pcdm=SJPZ20213481&sqrxm=&xdxm=&xfrq=&episodeGuid=';

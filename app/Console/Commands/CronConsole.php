@@ -3,6 +3,7 @@ namespace App\Console\Commands;
 
 use App\Http\Service\Manage\JobService;
 use App\Models\JobUserDetail;
+use App\Models\YhcAllMember;
 use App\Models\YhcMember;
 use Aws\S3\MultipartUploader;
 use Aws\S3\S3Client;
@@ -38,27 +39,34 @@ class CronConsole extends Command
 
     public function handle()
     {
-        $res_array = DB::table('yhc_member')->select(['id','bhj_number','members_number','id_card'])->where(["member_type"=>1])->orderBy('id', 'desc')->get();
         $this->info("脚本正在执行");
-        if(empty($res_array)) {
-            $this->info("未找到目标数据");
-            return;
-        }
 
+        DB::table('yhc_member')->select(['id','bhj_number','members_number','id_card'])->where(["member_type"=>1])->orderBy('id', 'asc')->chunk(500, function ($res_array) {
+            //以简历id的维度处理数据
+            foreach ($res_array as $value) {
+                $res = YhcAllMember::where(['bhj_number'=>$value->bhj_number])->first();
+                YhcMember::where(['id' => $value->id])->update(['ruh_time'=>$res->ruh_time,'shouccbsj'=>$res->shouccbsj]);
+                //获取主申请人入户时间
+                $num = $value->members_number - 1;
+                for ($i = 1; $i <= $num; $i++) {
+                    $temp_id = $value->id + $i;
+                    $temp_value = YhcMember::where(['id' => $temp_id])->first();
+                    $id_card = substr($temp_value->id_card, 6, 4);
+                    $temp_data['both_year'] = $id_card;
+                    $temp_data['bhj_number'] = $value->bhj_number;
+                    $temp_data['ruh_time'] = $res->ruh_time;
+                    $temp_data['shouccbsj'] = $res->shouccbsj;
 
-        //以简历id的维度处理数据
-        foreach ($res_array as $value) {
-            $id_card  =substr($value->id_card,6,4);
-            //获取主申请人入户时间
-            dd($id_card);die;
-            $num = $value->members_number - 1;
-            for ($i = 1; $i <= $num; $i++) {
-                $temp_id = $value->id + $i;
-                //echo $temp_id.PHP_EOL;
-                YhcMember::where(['id' => $temp_id])->update(['bhj_number' => $value->bhj_number]);
+                    YhcMember::where(['id' => $temp_id])->update($temp_data);
+                }
+//                $temp_other = YhcMember::where(['id' => $temp_id+1])->first();
+//                if($temp_other->member_type == 3 && empty($temp_other->bhj_number)) {
+//                    YhcMember::where(['id' => $temp_id+1])->update(['bhj_number'=>$value->bhj_number]);
+//                }
+                $this->info("完成了" . $value->bhj_number);
             }
-            $this->info("完成了".$value->bhj_number);
-        }
             $this->info("处理完成！");
+        });
     }
+
 }

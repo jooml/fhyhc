@@ -36,8 +36,8 @@ class GetAllMembersConsole extends Command
         ];
         $header = array("Content-type: application/json");
 
-        $totalPage = 4229;
-        for($i=1;$i <= $totalPage;$i++ ){
+        $totalPage = 119;
+        for($i=119;$i <= $totalPage;$i++ ){
             sleep(2);
             $option['page'] = $i;
             $option['pageNumber'] = $i;
